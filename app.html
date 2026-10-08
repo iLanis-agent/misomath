@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Miso math - the app</title>
+<style>
+  :root { --ink:#2b2016; --bg:#f7f2ea; --card:#fff; --accent:#8a3b12; --accent2:#b85c1e; --soft:#f3e3d3; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); padding:18px; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .lede { text-align:center; color:#5c4a38; margin:6px 0 14px; font-size:15px; max-width:760px; margin-left:auto; margin-right:auto; }
+  .banner { background:#fdecea; border:1px solid #e0a49a; color:#7c2313; border-radius:10px; padding:12px 16px; font-size:14px; line-height:1.5; margin:0 auto 16px; max-width:900px; }
+  .banner b { display:block; margin-bottom:2px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+  .card { background:var(--card); border-radius:14px; padding:22px; box-shadow:0 1px 3px rgba(60,40,20,.08); }
+  h2 { font-size:19px; margin-bottom:14px; }
+  label { display:block; font-size:13px; color:#6d5b48; margin:10px 0 4px; }
+  input, select { width:100%; padding:9px 10px; border:1px solid #d8c9b8; border-radius:8px; font-size:15px; background:#fffdf9; }
+  button { width:100%; margin-top:16px; padding:12px; border:0; border-radius:9px; background:var(--accent); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+  button:hover { background:var(--accent2); }
+  .big { font-size:34px; font-weight:700; margin:14px 0 2px; }
+  .cap { font-size:13px; color:#6d5b48; }
+  .pill { display:inline-block; margin-top:10px; padding:5px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+  .pill.warm { background:var(--soft); color:var(--accent); }
+  .pill.bad { background:#f9e0dc; color:#a3341f; }
+  .pill.good { background:#e2f0e4; color:#256b32; }
+  table { width:100%; margin-top:12px; border-collapse:collapse; font-size:14px; }
+  td { padding:7px 0; border-bottom:1px solid #eee2d4; }
+  td:last-child { text-align:right; font-weight:600; }
+  .err { color:#a3341f; font-size:14px; margin-top:10px; }
+  .note { font-size:13px; color:#8a7660; margin-top:10px; font-style:italic; }
+  .foot { margin-top:20px; font-size:12.5px; color:#7a6a58; line-height:1.6; }
+  .foot a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="lede">Recipes say "ferment 6 months" and skip the arithmetic that decides whether the crock is safe or spoiled. Salt percentage and koji ratio are multiplication. Run yours before the beans cool.</p>
+  <div class="banner">
+    <b>Salt is the safety line - read this first.</b>
+    The percentages below are labeled published norms, not a safety verdict. A batch that smells off, or shows mold that is pink, black, blue or fuzzy-colored (a flat white koji film is normal), is a failed batch: discard it. When in doubt, throw it out. Low-salt batches belong in the fridge and get eaten soon.
+  </div>
+  <div class="cards">
+    <div class="card">
+      <h2>Plan a batch</h2>
+      <label for="b_dry">Dry soybeans (g)</label>
+      <input id="b_dry" type="number" value="1000" min="0" step="50">
+      <label for="b_style">Style</label>
+      <select id="b_style">
+        <option value="shiro">shiro (sweet white)</option>
+        <option value="shinshu" selected>shinshu (mellow yellow)</option>
+        <option value="aka">aka (red)</option>
+      </select>
+      <button id="b_go">Plan the crock</button>
+      <div class="big" id="b_yield">-</div>
+      <div class="cap">finished miso, about</div>
+      <div class="pill warm" id="b_verdict" style="display:none"></div>
+      <table id="b_rows" style="display:none">
+        <tr><td>cooked beans</td><td id="b_cooked">-</td></tr>
+        <tr><td>koji (rice or barley)</td><td id="b_koji">-</td></tr>
+        <tr><td>salt</td><td id="b_salt">-</td></tr>
+        <tr><td>ferment window</td><td id="b_months">-</td></tr>
+      </table>
+      <div class="note" id="b_note" style="display:none"></div>
+      <div class="err" id="b_err"></div>
+    </div>
+    <div class="card">
+      <h2>Salt check</h2>
+      <label for="s_total">Total batch weight (g)</label>
+      <input id="s_total" type="number" value="3600" min="0" step="10">
+      <label for="s_salt">Salt you actually used (g)</label>
+      <input id="s_salt" type="number" value="288" min="0" step="1">
+      <button id="s_go">Check the salt</button>
+      <div class="big" id="s_pct">-</div>
+      <div class="cap">salt by weight</div>
+      <div class="pill" id="s_band" style="display:none"></div>
+      <div class="err" id="s_err"></div>
+    </div>
+    <div class="card">
+      <h2>How long already</h2>
+      <label for="t_style">Style</label>
+      <select id="t_style">
+        <option value="shiro">shiro (sweet white)</option>
+        <option value="shinshu">shinshu (mellow yellow)</option>
+        <option value="aka" selected>aka (red)</option>
+      </select>
+      <label for="t_months">Months since you packed it</label>
+      <input id="t_months" type="number" value="6" min="0" step="0.5">
+      <button id="t_go">Check the window</button>
+      <div class="big" id="t_window">-</div>
+      <div class="cap">classic window</div>
+      <div class="pill warm" id="t_status" style="display:none"></div>
+      <div class="note" id="t_note" style="display:none"></div>
+      <div class="err" id="t_err"></div>
+    </div>
+  </div>
+  <p class="foot">Salt percentages (5% shiro, 8% shinshu, 12% aka), koji-to-bean ratios, soak absorption (2.2x) and ferment windows are labeled guidance from published miso-making norms; your kitchen temperature moves the real calendar. The arithmetic on top of them is exact. <a href="index.html">Why this exists</a></p>
+</div>
+<script src="engine.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const g = id => parseFloat($(id).value);
+function show(id, txt, cls) { const e = $(id); e.textContent = txt; e.style.display = txt ? 'inline-block' : 'none'; if (cls) e.className = 'pill ' + cls; }
+document.getElementById('b_go').onclick = () => {
+  $('b_err').textContent = '';
+  try {
+    const r = Misomath.plan(g('b_dry'), $('b_style').value);
+    $('b_yield').textContent = (r.yieldG / 1000).toFixed(2) + ' kg';
+    show('b_verdict', r.verdict, 'warm');
+    $('b_cooked').textContent = r.cookedG + ' g';
+    $('b_koji').textContent = r.kojiG + ' g';
+    $('b_salt').textContent = r.saltG + ' g (' + r.saltPct + '%)';
+    $('b_months').textContent = r.monthsLo + ' to ' + r.monthsHi + ' months';
+    $('b_rows').style.display = 'table';
+    show('b_note', r.note);
+  } catch (e) { $('b_err').textContent = e.message; }
+};
+document.getElementById('s_go').onclick = () => {
+  $('s_err').textContent = '';
+  try {
+    const r = Misomath.saltcheck(g('s_total'), g('s_salt'));
+    $('s_pct').textContent = r.pct + ' %';
+    const cls = r.pct < 5 ? 'bad' : (r.pct <= 13 ? 'good' : 'warm');
+    show('s_band', r.band, cls);
+  } catch (e) { $('s_err').textContent = e.message; }
+};
+document.getElementById('t_go').onclick = () => {
+  $('t_err').textContent = '';
+  try {
+    const r = Misomath.timeline($('t_style').value, g('t_months'));
+    $('t_window').textContent = r.monthsLo + '-' + r.monthsHi + ' mo';
+    show('t_status', r.status, 'warm');
+    show('t_note', r.note);
+  } catch (e) { $('t_err').textContent = e.message; }
+};
+</script>
+</body>
+</html>
